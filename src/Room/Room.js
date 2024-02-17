@@ -74,7 +74,8 @@ const Room = () => {
 
     function clearQueue() {
         console.log("clearQueue");
-        axios.delete("http://localhost:3001/rooms/" + queue.room_id + "/queue")
+        axios.delete("http://localhost:3001/rooms/" + queue.room_id + "/queue",
+            {headers: {'Content-Type': 'application/json'}, withCredentials: true})
             .then((res) => {
                 // console.log("inside room, got queue=" + JSON.stringify(res.data));
                 setQueue(res.data);
@@ -90,7 +91,8 @@ const Room = () => {
     function deleteFromQueue(queueTrack) {
         // console.log("========== " + JSON.stringify(queueTrack));
         // console.log("========== " + queueTrack.user.role);
-        axios.delete("http://localhost:3001/rooms/" + user.room_id + "/queue/delete/" + queueTrack.uuid)
+        axios.delete("http://localhost:3001/rooms/" + user.room_id + "/queue/track/" + queueTrack.uuid,
+            {headers: {'Content-Type': 'application/json'}, withCredentials: true})
             .then((res) => {
                 // console.log("track removed!");
                 sendJsonMessage({
