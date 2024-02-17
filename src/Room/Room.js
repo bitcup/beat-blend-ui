@@ -88,11 +88,11 @@ const Room = () => {
     }
 
     function deleteFromQueue(queueTrack) {
-        console.log("========== " + JSON.stringify(queueTrack));
-        console.log("========== " + queueTrack.user.role);
+        // console.log("========== " + JSON.stringify(queueTrack));
+        // console.log("========== " + queueTrack.user.role);
         axios.delete("http://localhost:3001/rooms/" + user.room_id + "/queue/delete/" + queueTrack.uuid)
             .then((res) => {
-                console.log("track removed!");
+                // console.log("track removed!");
                 sendJsonMessage({
                                     event_type: "track_removed",
                                     timestamp: Date.now(),
