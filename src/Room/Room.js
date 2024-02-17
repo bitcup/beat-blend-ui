@@ -129,14 +129,14 @@ const Room = () => {
                 {showSearch &&
                     <Row>
                         <Col>
-                            <TrackSearch user={user} sendJsonMessage={sendJsonMessage} clearQueue={clearQueue} deleteFromQueue={deleteFromQueue} user={user}/>
+                            <TrackSearch sendJsonMessage={sendJsonMessage} clearQueue={clearQueue} deleteFromQueue={deleteFromQueue} user={user}/>
                         </Col>
                     </Row>
                 }
                 {!showSearch &&
                     <Row>
                         <Col>
-                            <Queue queue={queue}/>
+                            <Queue queue={queue} user={user} deleteFromQueue={deleteFromQueue} clearQueue={clearQueue}/>
                         </Col>
                     </Row>
                 }
