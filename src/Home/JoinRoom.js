@@ -5,10 +5,13 @@ import Form from 'react-bootstrap/Form';
 import Card from 'react-bootstrap/Card';
 
 import axios from "axios";
+import {Alert} from "react-bootstrap";
 
 const JoinRoom = () => {
     const [name, setName] = useState("")
     const [room, setRoom] = useState("")
+    const [errorMessage, setErrorMessage] = useState("")
+
     const navigate = useNavigate();
 
     const handleNameChange = (e) => {
@@ -27,7 +30,20 @@ const JoinRoom = () => {
             // todo: catch error - room not found
             .then((res) => {
                 navigate("/room/" + room)
-            });
+            })
+            .catch(function (error) {
+                    if (error.response) {
+                        if (error.response.status === 404) {
+                            if (name === "" || room ==="") {
+                                setErrorMessage("Please enter a guest name and a valid room.")
+                            } else {
+                                setErrorMessage("Room does not exist")
+                            }
+                            navigate("/");
+                        }
+                    }
+                }
+            );
     };
 
     return (
@@ -56,6 +72,14 @@ const JoinRoom = () => {
                                           placeholder="Room"
                                           value={room}
                                           onChange={handleRoomChange}/>
+                            {errorMessage &&
+                                <span>
+                                    <br/>
+                                    <Alert key="danger" variant="danger">
+                                        <i className="bi bi-exclamation-triangle"></i> {errorMessage}
+                                    </Alert>
+                                </span>
+                            }
                         </Form.Group>
                         <Button variant="primary" type="submit">
                             Join Room

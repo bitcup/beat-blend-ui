@@ -1,15 +1,18 @@
 body {
-    padding-bottom: 44px;
+    padding-bottom: 100px;
     padding-top: 100px;
-    background-color: #EAFFD0 !important;
+    /*background-color: #EAFFD0 !important;*/
+    background-color: #ADBC9F !important;
 }
 
 .header {
-    background-color: #F38181;
+    /*background-color: #F38181;*/
+    background-color: #436850;
 }
 
 .footer {
-    background-color: #95E1D3;
+    /*background-color: #95E1D3;*/
+    background-color: #FBFADA;
 }
 
 .nav-link {

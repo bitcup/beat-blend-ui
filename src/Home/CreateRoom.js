@@ -3,9 +3,11 @@ import axios from "axios";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import {Alert} from "react-bootstrap";
 
 const CreateRoom = () => {
     const [name, setName] = useState("")
+    const [errorMessage, setErrorMessage] = useState("")
 
     const handleChange = (e) => {
         setName(e.target.value);
@@ -14,12 +16,16 @@ const CreateRoom = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log("before create new room, name = " + name);
-        axios.post("http://localhost:3001/rooms", {"name": name},
-            {headers: {'Content-Type': 'application/json'}, withCredentials: true})
-            .then((res) => {
-                console.log("room created: " + JSON.stringify(res.data));
-                window.location.replace("http://localhost:3001/login/spotify");
-            });
+        if (name === "") {
+            setErrorMessage("Please enter a host name.")
+        } else {
+            axios.post("http://localhost:3001/rooms", {"name": name},
+                {headers: {'Content-Type': 'application/json'}, withCredentials: true})
+                .then((res) => {
+                    console.log("room created: " + JSON.stringify(res.data));
+                    window.location.replace("http://localhost:3001/login/spotify");
+                });
+        }
     };
 
     return (
@@ -40,6 +46,14 @@ const CreateRoom = () => {
                                       placeholder="Host name"
                                       value={name}
                                       onChange={handleChange}/>
+                        {errorMessage &&
+                            <span>
+                                    <br/>
+                                    <Alert key="danger" variant="danger">
+                                        <i className="bi bi-exclamation-triangle"></i> {errorMessage}
+                                    </Alert>
+                                </span>
+                        }
                     </Form.Group>
 
                     <Button variant="primary" type="submit">
