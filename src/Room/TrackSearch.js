@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import axios from "axios";
 import Stack from "react-bootstrap/Stack";
 import Card from "react-bootstrap/Card";
@@ -10,11 +10,15 @@ const TrackSearch = ({user, sendJsonMessage}) => {
     const [query, setQuery] = useState("")
     const [results, setResults] = useState([])
 
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            handleSubmit();
+        }, 400);
+        return () => clearTimeout(delayDebounceFn);
+    }, [query]);
+
     const handleChange = (e) => {
         setQuery(e.target.value);
-        if (e.target.value.length > 2) {
-            handleSubmit(e);
-        }
     };
 
     const handleAddToQueue = (e) => {
@@ -25,7 +29,7 @@ const TrackSearch = ({user, sendJsonMessage}) => {
         });
         axios.post("http://localhost:3001/rooms/" + user.room_id + "/queue/add",
             {"track": filteredTracks[0], "user": user},
-            {headers: {'Content-Type': 'application/json'}})
+            {headers: {'Content-Type': 'application/json'}, withCredentials: true})
             .then((res) => {
                 console.log("track added!");
                 sendJsonMessage({
@@ -40,14 +44,16 @@ const TrackSearch = ({user, sendJsonMessage}) => {
     };
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-        // console.log("track search query before submit: " + query);
-        axios.post("http://localhost:3001/spotify/search", {"query": query, "limit": 20},
-            {headers: {'Content-Type': 'application/json'}})
-            .then((res) => {
-                // console.log(JSON.stringify(res.data));
-                setResults(res.data)
-            });
+        // e.preventDefault();
+        if (query !== "") {
+            console.log("track search query before submit: " + query);
+            axios.post("http://localhost:3001/spotify/search", {"query": query, "limit": 20},
+                {headers: {'Content-Type': 'application/json'}, withCredentials: true})
+                .then((res) => {
+                    // console.log(JSON.stringify(res.data));
+                    setResults(res.data)
+                });
+        }
     };
 
     const handleClearSearch = (e) => {
@@ -74,7 +80,7 @@ const TrackSearch = ({user, sendJsonMessage}) => {
                     <Card key={track.uri} className="flex-row flex-wrap" style={{borderWidth: 1, fontSize: '0.85em'}}>
                         <Card.Header style={{borderWidth: 0}}>
                             <Card.Img variant="top"
-                                      src={track.albumUrl}
+                                      src={track.album_url}
                                       style={{height: "48px", width: "48px", cursor: "pointer"}}/>
                         </Card.Header>
                         <Card.Header style={{backgroundColor: "white", borderWidth: 0}}>

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react"
+import { useNavigate } from 'react-router-dom';
 import Cookies from "js-cookie";
 import axios from "axios";
 import TrackSearch from "./TrackSearch";
@@ -25,6 +26,9 @@ const Room = () => {
     const [user, setUser] = useState(null)
     const [queue, setQueue] = useState(null)
     const [showSearch, setShowSearch] = useState(false)
+
+    const navigate = useNavigate();
+
     // Run when a new WebSocket message is received (lastJsonMessage)
     useEffect(() => {
         if (user !== null && lastJsonMessage !== null && lastJsonMessage.room_id === user.room_id) {
@@ -32,7 +36,8 @@ const Room = () => {
                         " received event_type: " + lastJsonMessage.event_type +
                         ", intended for room: " + lastJsonMessage.room_id +
                         ", event: " + JSON.stringify(lastJsonMessage))
-            axios.get("http://localhost:3001/rooms/" + user.room_id + "/queue")
+            axios.get("http://localhost:3001/rooms/" + user.room_id + "/queue",
+                {headers: {'Content-Type': 'application/json'}, withCredentials: true})
                 .then((res) => {
                     // console.log("inside room, got queue=" + JSON.stringify(res.data));
                     setQueue(res.data);
@@ -60,16 +65,26 @@ const Room = () => {
             const pieces = user_cookie.split(":");
             // const room_id = pieces[0];
             const user_id = pieces[1];
-            axios.get("http://localhost:3001/users/" + user_id)
+            axios.get("http://localhost:3001/users/" + user_id,
+                {headers: {'Content-Type': 'application/json'}, withCredentials: true})
                 .then((res) => {
                     console.log("inside room, got user: " + JSON.stringify(res.data));
                     setUser(res.data)
-                    axios.get("http://localhost:3001/rooms/" + res.data.room_id + "/queue")
+                    axios.get("http://localhost:3001/rooms/" + res.data.room_id + "/queue",
+                        {headers: {'Content-Type': 'application/json'}, withCredentials: true})
                         .then((res) => {
                             console.log("inside room, got queue=" + JSON.stringify(res.data));
                             setQueue(res.data)
                         });
-                });
+                })
+                .catch(function (error) {
+                        if (error.response) {
+                            if (error.response.status === 404) {
+                                navigate("/");
+                            }
+                        }
+                    }
+                );
         }
     }, []);
 
@@ -129,7 +144,7 @@ const Room = () => {
                 {showSearch &&
                     <Row>
                         <Col>
-                            <TrackSearch sendJsonMessage={sendJsonMessage} clearQueue={clearQueue} deleteFromQueue={deleteFromQueue} user={user}/>
+                            <TrackSearch sendJsonMessage={sendJsonMessage} user={user}/>
                         </Col>
                     </Row>
                 }

@@ -8,13 +8,15 @@ const Queue = ({queue, clearQueue, deleteFromQueue, user}) => {
     if (queue !== null) {
         return (
             <>
-            <Button onClick={clearQueue}>Clear Queue</Button>
+                {user.role === "host" &&
+                    <Button variant="danger" onClick={clearQueue} size="sm">Clear Queue</Button>
+                }
             <Stack direction="vertical" gap={1} className="justify-content-center">
-                {queue.tracks.map((queueTrack) => (
+                {queue.items.map((queueTrack) => (
                     <Card key={queueTrack.track.uri} className="flex-row flex-wrap" style={{borderWidth: 1}}>
                         <Card.Header style={{borderWidth: 0}}>
                             <Card.Img variant="top"
-                                      src={queueTrack.track.albumUrl}
+                                      src={queueTrack.track.album_url}
                                       style={{height: "64px", width: "64px", cursor: "pointer"}}/>
                         </Card.Header>
                         <Card.Header style={{backgroundColor: "white", borderWidth: 0}}>
