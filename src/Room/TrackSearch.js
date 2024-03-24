@@ -6,7 +6,7 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import {InputGroup} from "react-bootstrap";
 
-const TrackSearch = ({user, sendJsonMessage}) => {
+const TrackSearch = ({user, sendJsonMessage, setPlayingTrack}) => {
     const [query, setQuery] = useState("")
     const [results, setResults] = useState([])
 
@@ -24,17 +24,17 @@ const TrackSearch = ({user, sendJsonMessage}) => {
             return track.uri === e.target.id;
         });
         axios.post("http://localhost:3001/rooms/" + user.room_id + "/queue/add",
-            {"track": filteredTracks[0], "user": user},
-            {headers: {'Content-Type': 'application/json'}})
+                   {"track": filteredTracks[0], "user": user},
+                   {headers: {'Content-Type': 'application/json'}, withCredentials: true})
             .then((res) => {
                 console.log("track added!");
                 sendJsonMessage({
-                    event_type: "track_added",
-                    timestamp: Date.now(),
-                    room_id: user.room_id,
-                    user_name: user.name,
-                    track_name: filteredTracks[0].title
-                });
+                                    event_type: "track_added",
+                                    timestamp: Date.now(),
+                                    room_id: user.room_id,
+                                    user_name: user.name,
+                                    track_name: filteredTracks[0].title
+                                });
                 filteredTracks[0].added = true;
             });
     };
@@ -43,7 +43,7 @@ const TrackSearch = ({user, sendJsonMessage}) => {
         e.preventDefault();
         // console.log("track search query before submit: " + query);
         axios.post("http://localhost:3001/spotify/search", {"query": query, "limit": 20},
-            {headers: {'Content-Type': 'application/json'}})
+                   {headers: {'Content-Type': 'application/json'}})
             .then((res) => {
                 // console.log(JSON.stringify(res.data));
                 setResults(res.data)
@@ -74,7 +74,8 @@ const TrackSearch = ({user, sendJsonMessage}) => {
                     <Card key={track.uri} className="flex-row flex-wrap" style={{borderWidth: 1, fontSize: '0.85em'}}>
                         <Card.Header style={{borderWidth: 0}}>
                             <Card.Img variant="top"
-                                      src={track.albumUrl}
+                                      onClick={() => setPlayingTrack(track)}
+                                      src={track.album_url}
                                       style={{height: "48px", width: "48px", cursor: "pointer"}}/>
                         </Card.Header>
                         <Card.Header style={{backgroundColor: "white", borderWidth: 0}}>
@@ -82,14 +83,14 @@ const TrackSearch = ({user, sendJsonMessage}) => {
                             <Card.Subtitle
                                 className="mb-2 small text-muted">{track.artist}</Card.Subtitle>
                             {!track.added &&
-                                <Button variant="success" size="sm" id={track.uri} onClick={handleAddToQueue}>
-                                    Add to Playlist
-                                </Button>
+                             <Button variant="success" size="sm" id={track.uri} onClick={handleAddToQueue}>
+                                 Add to Playlist
+                             </Button>
                             }
                             {track.added &&
-                                <Button variant="outline-secondary" size="sm" id={track.uri}>
-                                    Added to Playlist
-                                </Button>
+                             <Button variant="outline-secondary" size="sm" id={track.uri}>
+                                 Added to Playlist
+                             </Button>
                             }
                         </Card.Header>
                     </Card>

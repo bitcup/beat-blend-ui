@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react"
+import { useNavigate } from 'react-router-dom';
 import Cookies from "js-cookie";
 import axios from "axios";
 import TrackSearch from "./TrackSearch";
@@ -9,6 +10,7 @@ import Container from "react-bootstrap/Container";
 import {Col, Row} from "react-bootstrap";
 import NavInfo from "./NavInfo";
 import Nav from "react-bootstrap/Nav";
+import CustomSpotifyPlayer from "../Spotify/CustomSpotifyPlayer";
 
 const Room = () => {
     const [socketUrl] = useState('ws://localhost:3001/ws/events');
@@ -25,6 +27,11 @@ const Room = () => {
     const [user, setUser] = useState(null)
     const [queue, setQueue] = useState(null)
     const [showSearch, setShowSearch] = useState(false)
+
+    const [playingTrack, setPlayingTrack] = useState(null)
+
+    const navigate = useNavigate();
+
     // Run when a new WebSocket message is received (lastJsonMessage)
     useEffect(() => {
         if (user !== null && lastJsonMessage !== null && lastJsonMessage.room_id === user.room_id) {
@@ -32,9 +39,10 @@ const Room = () => {
                         " received event_type: " + lastJsonMessage.event_type +
                         ", intended for room: " + lastJsonMessage.room_id +
                         ", event: " + JSON.stringify(lastJsonMessage))
-            axios.get("http://localhost:3001/rooms/" + user.room_id + "/queue")
+            axios.get("http://localhost:3001/rooms/" + user.room_id + "/queue",
+                      {headers: {'Content-Type': 'application/json'}, withCredentials: true})
                 .then((res) => {
-                    // console.log("inside room, got queue=" + JSON.stringify(res.data));
+                    console.log("inside room, got queue=" + JSON.stringify(res.data));
                     setQueue(res.data);
                 });
         } else {
@@ -60,16 +68,26 @@ const Room = () => {
             const pieces = user_cookie.split(":");
             // const room_id = pieces[0];
             const user_id = pieces[1];
-            axios.get("http://localhost:3001/users/" + user_id)
+            axios.get("http://localhost:3001/users/" + user_id,
+                      {headers: {'Content-Type': 'application/json'}, withCredentials: true})
                 .then((res) => {
                     console.log("inside room, got user: " + JSON.stringify(res.data));
                     setUser(res.data)
-                    axios.get("http://localhost:3001/rooms/" + res.data.room_id + "/queue")
+                    axios.get("http://localhost:3001/rooms/" + res.data.room_id + "/queue",
+                              {headers: {'Content-Type': 'application/json'}, withCredentials: true})
                         .then((res) => {
                             console.log("inside room, got queue=" + JSON.stringify(res.data));
                             setQueue(res.data)
                         });
-                });
+                })
+                .catch(function (error) {
+                           if (error.response) {
+                               if (error.response.status === 404) {
+                                   navigate("/");
+                               }
+                           }
+                       }
+                );
         }
     }, []);
 
@@ -86,16 +104,16 @@ const Room = () => {
     function clearQueue() {
         console.log("clearQueue");
         axios.delete("http://localhost:3001/rooms/" + queue.room_id + "/queue",
-            {headers: {'Content-Type': 'application/json'}, withCredentials: true})
+                     {headers: {'Content-Type': 'application/json'}, withCredentials: true})
             .then((res) => {
                 // console.log("inside room, got queue=" + JSON.stringify(res.data));
                 setQueue(res.data);
                 sendJsonMessage({
-                    event_type: "queue_cleared",
-                    timestamp: Date.now(),
-                    room_id: user.room_id,
-                    user_name: user.name,
-                })
+                                    event_type: "queue_cleared",
+                                    timestamp: Date.now(),
+                                    room_id: user.room_id,
+                                    user_name: user.name,
+                                })
             });
     }
 
@@ -103,19 +121,43 @@ const Room = () => {
         // console.log("========== " + JSON.stringify(queueTrack));
         // console.log("========== " + queueTrack.user.role);
         axios.delete("http://localhost:3001/rooms/" + user.room_id + "/queue/track/" + queueTrack.uuid,
-            {headers: {'Content-Type': 'application/json'}, withCredentials: true})
+                     {headers: {'Content-Type': 'application/json'}, withCredentials: true})
             .then((res) => {
                 // console.log("track removed!");
                 sendJsonMessage({
-                    event_type: "track_removed",
-                    timestamp: Date.now(),
-                    room_id: user.room_id,
-                    user_name: user.name,
-                    track_name: queueTrack.title
-                })
+                                    event_type: "track_removed",
+                                    timestamp: Date.now(),
+                                    room_id: user.room_id,
+                                    user_name: user.name,
+                                    track_name: queueTrack.title
+                                })
             });
     }
 
+    function playNextInQueue() {
+
+        let data = {
+            room_id: user.room_id, track: queue.tracks[0].track
+        }
+
+        console.log("data: " + JSON.stringify(data));
+
+        // console.log("user.room_id: " + user.room_id);
+        // console.log("queue: " + JSON.stringify(queue.tracks[0]));
+
+        axios
+            .post("http://localhost:3001/rooms/" + user.room_id + "/playingtrack/set",
+                  {"artist": queue.tracks[0].track.artist,
+                      "title": queue.tracks[0].track.title,
+                      "uri": queue.tracks[0].track.uri,
+                      "albumUrl": queue.tracks[0].track.albumUrl,},
+                  {headers: {'Content-Type': 'application/json'}})
+            .then((res) => {
+                setPlayingTrack(res.data);
+            });
+
+        deleteFromQueue(playingTrack);
+    }
 
     return (
         <>
@@ -129,7 +171,9 @@ const Room = () => {
                 {showSearch &&
                     <Row>
                         <Col>
-                            <TrackSearch sendJsonMessage={sendJsonMessage} clearQueue={clearQueue} deleteFromQueue={deleteFromQueue} user={user}/>
+                            <TrackSearch sendJsonMessage={sendJsonMessage} clearQueue={clearQueue}
+                                         deleteFromQueue={deleteFromQueue} user={user}
+                                         setPlayingTrack={setPlayingTrack}/>
                         </Col>
                     </Row>
                 }
@@ -140,6 +184,13 @@ const Room = () => {
                         </Col>
                     </Row>
                 }
+            </Container>
+            <Container fluid className="fixed-bottom">
+                <CustomSpotifyPlayer
+                    accessToken={user?.access_token}
+                    trackUri={playingTrack?.uri}
+                    playNextInTheQueue={playNextInQueue}
+                />
                 <Nav fill variant="underline" defaultActiveKey="linkPlaylist" className="fixed-bottom footer">
                     <Nav.Item>
                         <Nav.Link eventKey="linkPlaylist" onClick={handleHideSearch}>
